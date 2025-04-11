@@ -11,7 +11,6 @@ load_dotenv()
 RAPIDAPI_KEY = os.getenv("LINKEDIN_JOB_SEARCH_RAPIDAPI_KEY") # https://rapidapi.com/fantastic-jobs-fantastic-jobs-default/api/linkedin-job-search-api/playground
 
 def job_search(input: str):
-    # print(f"Tool input: {input}") #for debugging
     job_title = input.strip()
     location = "United States"
 
@@ -27,19 +26,30 @@ def job_search(input: str):
     }
 
     response = requests.get(url, headers=headers, params=params)
+    
     if response.status_code == 200:
         data = response.json()
-        jobs = data.get("title", [])[:3]
+        jobs = data.get("data", [])[:3]  # safer key assumption than "title"
+
         if not jobs:
             return "No jobs found."
-        # return "\n".join([f"{job['title']} at {job['company']} ({job['location']})" for job in jobs])
-        return jobs
+
+        formatted_jobs = []
+        for job in jobs:
+            title = job.get("title", "Unknown Title")
+            company = job.get("company", {}).get("name", "Unknown Company")
+            location = job.get("location", "Unknown Location")
+            formatted_jobs.append(f"📌 {title} at {company} ({location})")
+
+        return "\n\n".join(formatted_jobs)
+
     elif response.status_code == 429:
         time.sleep(2)
-        return "Rate limit hit."
+        return "Rate limit hit. Please try again shortly."
     else:
         time.sleep(2)
         return f"API Error: {response.status_code}"
+
 
 # Define LangChain tool
 job_search_tool = Tool(
