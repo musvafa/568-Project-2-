@@ -1,5 +1,4 @@
 import time
-
 from langchain.agents import initialize_agent, Tool
 from langchain.llms import OpenAI
 import requests
@@ -8,54 +7,59 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-RAPIDAPI_KEY = os.getenv("LINKEDIN_JOB_SEARCH_RAPIDAPI_KEY") # https://rapidapi.com/fantastic-jobs-fantastic-jobs-default/api/linkedin-job-search-api/playground
+RAPIDAPI_KEY = os.getenv("LINKEDIN_JOB_SEARCH_RAPIDAPI_KEY") # https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch/playground
 
 def job_search(input: str):
-    job_title = input.strip()
-    location = "United States"
+    # print(f"Tool input: {input}") # for debugging
+    job_query = input.strip() # Example: "developer jobs in chicago"
 
-    url = "https://linkedin-job-search-api.p.rapidapi.com/active-jb-1h"
+    url = "https://jsearch.p.rapidapi.com/search"
     headers = {
         "X-RapidAPI-Key": RAPIDAPI_KEY,
-        "X-RapidAPI-Host": "linkedin-job-search-api.p.rapidapi.com"
+        "X-RapidAPI-Host": "jsearch.p.rapidapi.com"
     }
     params = {
-        "offset": "0",
-        "title_filter": f"\"{job_title}\"",
-        "location_filter": f"\"{location}\""
+        "query": job_query,
+        "page": "1",
+        "num_pages": "1",
+        "country": "us",
+        "date_posted": "all"
     }
 
     response = requests.get(url, headers=headers, params=params)
-    
+
+
     if response.status_code == 200:
         data = response.json()
-        jobs = data.get("data", [])[:3]  # safer key assumption than "title"
+        jobs = data.get("data", [])[:3]  # show top 3 jobs
 
         if not jobs:
             return "No jobs found."
 
-        formatted_jobs = []
+        results = []
         for job in jobs:
-            title = job.get("title", "Unknown Title")
-            company = job.get("company", {}).get("name", "Unknown Company")
-            location = job.get("location", "Unknown Location")
-            formatted_jobs.append(f"📌 {title} at {company} ({location})")
+            title = job.get("job_title", "N/A")
+            company = job.get("employer_name", "N/A")
+            location = job.get("job_location", "N/A")
+            link = job.get("job_apply_link", "N/A")
+            posted = job.get("job_posted_human_readable", "")
+            results.append(f"{title} at {company} ({location}) — Posted {posted}\n{link}")
 
-        return "\n\n".join(formatted_jobs)
+        return "\n\n".join(results)
 
     elif response.status_code == 429:
         time.sleep(2)
-        return "Rate limit hit. Please try again shortly."
+        return "Rate limit hit."
     else:
         time.sleep(2)
         return f"API Error: {response.status_code}"
-
 
 # Define LangChain tool
 job_search_tool = Tool(
     name="job_search",
     func=job_search,
-    description="Use this tool to search for jobs. Input should be a job title or keyword as a string."
+    description="Use this tool to search for jobs. Input should be a job title or keyword like 'data analyst in Seattle' (include location only when the user mentioned it), summarizing from the user's query.",
+    return_direct = True
 )
 
 llm = OpenAI(base_url="https://openai.vocareum.com/v1", api_key=os.getenv("SI568_OPENAI_API_KEY"), temperature=0.2)
@@ -69,12 +73,10 @@ agent = initialize_agent(
 )
 
 if __name__ == "__main__":
-    job_query = input("Enter your skills or job title: ")
+    job_query = input("I'm looking for job listings for: ")
 
-    user_prompt = f"I'm looking for job listings for '{job_query}'. Use the job_search tool."
+    user_prompt = f"I'm looking for job listings for {job_query}. Use the job_search tool."
 
     response = agent.run(user_prompt)
     print(response)
 
-jobmatch_1.py
-Displaying jobmatch_1.py.
