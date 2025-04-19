@@ -1,0 +1,48 @@
+# 💼 JobMatch Agent
+
+## 🔍 Project Summary
+**JobMatch Agent** is a simple AI tool that helps users find job listings using natural language input. Instead of manually searching through job portals, users can describe what kind of job they’re looking for (e.g., “developer jobs in Chicago”) and the AI agent fetches relevant listings using the JSearch API via RapidAPI.
+
+## 💡 Our Code
+
+### 1. **Environment Setup**
+- Loads sensitive API keys from a `.env` file using `dotenv`.
+- Uses two APIs:
+  - `SI568_OPENAI_API_KEY`: For interacting with a language model via OpenAI (Vocareum instance).
+  - `LINKEDIN_JOB_SEARCH_RAPIDAPI_KEY`: For querying the JSearch API.
+
+### 2. **Job Search Tool**
+- Defines a function `job_search(input)` which takes user input like _“data analyst in Seattle”_.
+- Sends a request to the [JSearch API](https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch/) with the search query.
+- Returns the **top 3** job results, formatted with:
+  - Job title
+  - Company name
+  - Location
+  - Posting date
+  - Application link
+
+### 3. **LangChain Integration**
+- Wraps the `job_search` function in a LangChain `Tool`, so it can be invoked by the agent.
+- Describes how and when to use the tool based on the user’s query.
+- Uses a `zero-shot-react-description` LangChain agent to decide what tools to call.
+
+### 4. **User Interaction**
+- Prompts the user for input like _“I’m looking for job listings for: ”_.
+- Automatically builds a prompt: _“I'm looking for job listings for [input]. Use the job_search tool.”_
+- Passes the prompt to the agent, which runs the tool and returns job listings.
+
+## ✅ What Our Project Demonstrates
+- How to build a simple, conversational job search assistant using LangChain.
+- Using a real-time job search API in combination with an LLM.
+- Prompt engineering and tool integration with agents.
+- Creating a more natural user experience without forms or dropdowns.
+
+## 📝 Requirements
+- `langchain`
+- `openai`
+- `requests`
+- `python-dotenv`
+
+---
+
+Our project bridges conversational AI and real-world utility by turning user-friendly language into structured job searches—no login, filters, or forms required!
